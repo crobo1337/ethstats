@@ -54,17 +54,26 @@ def get_max_usage_before_restart(usage, restarts):
 """
 convert all times down to seconds and add to totals
 """
+
+def split_time(timestamp):  # 00:00:00
+    split_time = timestamp.split(":")
+    total_seconds = (int(split_time[0])*3600)+ \
+                    (int(split_time[1])*60)+ \
+                    (int(split_time[2]))
+    return total_seconds
+
 def add_up_usage(usage, last_entries_before_restart):
     power = 0.0
     uptime = 0
     for entry in last_entries_before_restart:
-        split_time = entry['uptime_hms'].split(":")
-        total_seconds = (int(split_time[0])*3600)+ \
-                        (int(split_time[1])*60)+ \
-                        (int(split_time[2])) + \
-                        (int(entry['uptime_days'].strip('d'))*86400)
+        total_seconds = split_time(entry['uptime_hms']) + (int(entry['uptime_days'].strip('d'))*86400)
         power = power + float(entry['power_usage'])
         uptime = uptime + total_seconds
+    #add last usage entry from file, if a restart hasnt occured yet (running)
+    # or if the miner hasent been run since last restart
+
+    power = power + float(usage[len(usage)-1]['power_usage'])
+    uptime = uptime + int(split_time(usage[len(usage)-1]['uptime_hms']))
     return {'uptime': uptime, 'power_usage': power}
 
 
